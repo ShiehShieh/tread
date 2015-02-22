@@ -1,8 +1,11 @@
 #ifndef BOOKCASE
 #define BOOKCASE
 
+#include <stddef.h>
+
 struct tmp_book;
 struct tmp_bookcase;
+struct tmp_manifest;
 
 typedef struct tmp_book{
     char* name;
@@ -16,12 +19,15 @@ typedef struct tmp_bookcase {
 	char* path;
 	book_t* booklist;
     struct tmp_bookcase* next;
+    struct tmp_manifest* belongto;
+    size_t bksize;
 } bookcase_t;
 
-typedef struct {
+typedef struct tmp_manifest{
     char* name;
     char* path;
 	bookcase_t* bclist;
+    size_t bcsize;;
 } manifest_t;
 
 void print_manifest(manifest_t* mp);

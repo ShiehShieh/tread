@@ -89,6 +89,8 @@ int build_book(char* path, book_t* bkp) {
 int insert_bklist(bookcase_t* bcp, book_t* item) {
     item->next = bcp->booklist;
     bcp->booklist = item;
+    item->belongto = bcp;
+    ++bcp->bksize;
 
     return 0;
 }
@@ -96,9 +98,9 @@ int insert_bklist(bookcase_t* bcp, book_t* item) {
 
 int build_bookcase(char* directory, bookcase_t* bcp) {
     char* temp = basename(directory);
-    book_t* bkp = NULL;
     DIR* dir = NULL;
     struct dirent* subfile = NULL;
+    book_t* bkp = NULL;
 
     if (temp[0] == '.')
     {
@@ -117,6 +119,8 @@ int build_bookcase(char* directory, bookcase_t* bcp) {
     strcpy(bcp->path, directory);
     bcp->next = NULL;
     bcp->booklist = NULL;
+    bcp->belongto = NULL;
+    bcp->bksize = 0;
 
     while((subfile = readdir(dir)) != NULL) {
         char* temp = (char*)malloc(sizeof(char)*(strlen(directory)+1));
@@ -138,6 +142,8 @@ int build_bookcase(char* directory, bookcase_t* bcp) {
 int insert_bclist(manifest_t* mp, bookcase_t* item) {
     item->next = mp->bclist;
     mp->bclist = item;
+    item->belongto = mp;
+    ++mp->bcsize;
 
     return 0;
 }
@@ -165,6 +171,7 @@ int build_manifest(char *directory, manifest_t* mp) {
     mp->path = (char*)malloc(sizeof(char)*(strlen(directory)+1));
     strcpy(mp->path, directory);
     mp->bclist = NULL;
+    mp->bcsize = 0;
 
     while((subdir = readdir(rootdir)) != NULL) {
         char* temp = (char*)malloc(sizeof(char)*(strlen(directory)+1));
