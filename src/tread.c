@@ -14,6 +14,6 @@ int main(int argc, char *argv[])
 
     display_ui(&mp);
 
-	return 0;
+    return 0;
 }
 
