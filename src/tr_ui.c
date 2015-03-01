@@ -61,9 +61,11 @@ int update_bcs(WINDOW* wp, manifest_t* mp, int highlight) {
 }
 
 
-int switch_to_bks(WINDOW* wp, WINDOW* last, bookcase_t* bcp) {
+int switch_to_bks(WINDOW* wp, bookcase_t* bcp) {
     int counter = 0, c = 0, highlight = 0, choice = 0, n_choices = bcp->bksize-1;
     book_t *bkp = NULL;
+
+    update_bks(wp, bcp, highlight);
 
     while(1) {
         choice = -1;
@@ -124,8 +126,8 @@ int display_ui(manifest_t* mp) {
     noecho();
     keypad(stdscr, TRUE);
 
-    WINDOW *wp_bcs = newwin(LINES, 20, 0, 0);
-    WINDOW *wp_bks = newwin(LINES, COLS-20, 0, 20);
+    WINDOW *wp_bcs = newwin(LINES-1, 20, 0, 0);
+    WINDOW *wp_bks = newwin(LINES-1, COLS-20, 0, 20);
     keypad(wp_bcs, TRUE);
     keypad(wp_bks, TRUE);
     getch();
@@ -174,17 +176,25 @@ int display_ui(manifest_t* mp) {
             for (bcp = mp->bclist; bcp != NULL; bcp = bcp->next)
             {
                 if (counter++ == choice) {
-                    switch_to_bks(wp_bks, wp_bcs, bcp);
+                    switch_to_bks(wp_bks, bcp);
                 }
             }
             if (choice == QUIT)
             {
-                break;
+                mvaddstr(LINES-1, 0, "Quit Tread? ([yes]/no):");
+                refresh();
+                c = getch();
+                if (c == 'y') {
+                    break;
+                } else {
+                    move(LINES-1, 0);
+                    clrtoeol();
+                    refresh();
+                    continue;
+                }
             }
         }
     }
-
-    getch();
 
     delwin(wp_bcs);
     delwin(wp_bks);
