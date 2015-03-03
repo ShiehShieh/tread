@@ -12,7 +12,7 @@
 #include "util.h"
 
 
-unsigned int IOBUFF = 1024;
+unsigned int IOBUFF = 2048;
 
 
 void print_manifest(manifest_t* mp) {
@@ -40,6 +40,12 @@ void print_bookcase(bookcase_t* bcp) {
     for (bkp = bcp->booklist; bkp != NULL; bkp = bkp->next)
     {
         if (write(STDOUT_FILENO, bkp->name, strlen(bkp->name)) != (ssize_t)strlen(bkp->name))
+        {
+            err_sys("write error");
+            return;
+        }
+        printf("     ");
+        if (write(STDOUT_FILENO, bkp->path, strlen(bkp->path)) != (ssize_t)strlen(bkp->path))
         {
             err_sys("write error");
             return;
@@ -123,7 +129,7 @@ int build_bookcase(char* directory, bookcase_t* bcp) {
     bcp->bksize = 0;
 
     while((subfile = readdir(dir)) != NULL) {
-        char* temp = (char*)malloc(sizeof(char)*(strlen(directory)+1));
+        char* temp = (char*)malloc(sizeof(char)*(strlen(directory)+strlen(subfile->d_name)+2));
         temp = strcpy(temp, directory);
         bkp = (book_t*)malloc(sizeof(book_t));
         if ((build_book(path_join(temp, subfile->d_name), bkp)) < 0)

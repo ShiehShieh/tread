@@ -7,5 +7,7 @@ void err_sys(char* message);
 
 void err_msg(char* message);
 
+void err_ui(char* message);
+
 #endif
 
