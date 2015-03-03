@@ -18,14 +18,18 @@ int update_content(WINDOW* wp, int fd, int ins, long index[], int *now) {
     FILE *fp = NULL;
     struct stat buf;
 
-    wmove(wp, 1, 1);
-
     if (fstat(fd, &buf) < 0)
     {
         err_ui("fstat error.");
         return -1;
     }
     fsize = buf.st_size;
+
+    if ((ins == 1 && *now == 0)
+            || (ins == 2 && *now == 1023)
+            || (ins == 2 && index[(*now)+1] == fsize)) {
+        return 0;
+    }
 
     if ((fp = fdopen(fd, "r")) == NULL)
     {
@@ -39,11 +43,15 @@ int update_content(WINDOW* wp, int fd, int ins, long index[], int *now) {
         return -1;
     }
 
+    wclear(wp);
+    box(wp, 0, 0);
+    wrefresh(wp);
+    wmove(wp, 1, 1);
+    getyx(wp, y, x);
     if (ins == 1)
     {
         fseek(fp, index[--(*now)], SEEK_SET);
-        getyx(wp, y, x);
-        while(y < LINES-3) {
+        while(y < LINES-2) {
             if ((fgets(content, IOBUFF, fp)) == NULL)
             {
                 if (feof(fp))
@@ -61,8 +69,8 @@ int update_content(WINDOW* wp, int fd, int ins, long index[], int *now) {
         }
     } else if (ins == 2)
     {
-        index[(*now)++] = ftell(fp);
-        while(y < LINES-3) {
+        fseek(fp, index[++(*now)], SEEK_SET);
+        while(y < LINES-2) {
             if ((fgets(content, IOBUFF, fp)) == NULL)
             {
                 if (feof(fp))
@@ -79,6 +87,7 @@ int update_content(WINDOW* wp, int fd, int ins, long index[], int *now) {
             wmove(wp, y, x+1);
         }
     }
+    index[(*now)+1] = ftell(fp);
     wrefresh(wp);
 
     return *now;
@@ -150,10 +159,6 @@ int switch_to_bk(WINDOW* wp, char* filename) {
         return -1;
     }
 
-    wclear(wp);
-    box(wp, 0, 0);
-    wrefresh(wp);
-
     update_content(wp, fd, ins, index, &now);
 
     while(1) {
@@ -163,17 +168,11 @@ int switch_to_bk(WINDOW* wp, char* filename) {
         switch (c) {
             case KEY_UP:
             case 'k':
-                if (now != 0)
-                {
-                    ins = 1;
-                }
+                ins = 1;
                 break;
             case KEY_DOWN:
             case 'j':
-                if (now != 1023)
-                {
-                    ins = 2;
-                }
+                ins = 2;
                 break;
             case 'q':
                 choice = QUIT;
