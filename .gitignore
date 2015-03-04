@@ -4,8 +4,11 @@
 # Vim
 *.swp
 
+# Executable
+tread
+
 # Intermediat
 *.o
-test
+*.obj
 1
 
