@@ -10,8 +10,6 @@ int main(int argc, char *argv[])
 
     build_manifest(argv[1], &mp);
 
-    print_manifest(&mp);
-
     display_ui(&mp);
 
     return 0;

@@ -12,8 +12,17 @@
 extern unsigned int IOBUFF;
 
 
+int clear_win_char(WINDOW* wp) {
+    wclear(wp);
+    box(wp, 0, 0);
+    wrefresh(wp);
+
+    return 0;
+}
+
+
 int update_content(WINDOW* wp, int fd, int ins, long index[], int *now) {
-    int x = 0, y = 0, fsize = 0;
+    int x = 0, y = 0;
     char *content = NULL;
     FILE *fp = NULL;
     struct stat buf;
@@ -23,11 +32,10 @@ int update_content(WINDOW* wp, int fd, int ins, long index[], int *now) {
         err_ui("fstat error.");
         return -1;
     }
-    fsize = buf.st_size;
 
     if ((ins == 1 && *now == 0)
             || (ins == 2 && *now == 1023)
-            || (ins == 2 && index[(*now)+1] == fsize)) {
+            || (ins == 2 && index[(*now)+1] == buf.st_size)) {
         return 0;
     }
 
@@ -43,49 +51,32 @@ int update_content(WINDOW* wp, int fd, int ins, long index[], int *now) {
         return -1;
     }
 
-    wclear(wp);
-    box(wp, 0, 0);
-    wrefresh(wp);
+    clear_win_char(wp);
     wmove(wp, 1, 1);
     getyx(wp, y, x);
     if (ins == 1)
     {
         fseek(fp, index[--(*now)], SEEK_SET);
-        while(y < LINES-2) {
-            if ((fgets(content, IOBUFF, fp)) == NULL)
-            {
-                if (feof(fp))
-                {
-                    break;
-                } else if (ferror(fp))
-                {
-                    err_ui("fgets error.");
-                    return -1;
-                }
-            }
-            waddstr(wp, content);
-            getyx(wp, y, x);
-            wmove(wp, y, x+1);
-        }
     } else if (ins == 2)
     {
         fseek(fp, index[++(*now)], SEEK_SET);
-        while(y < LINES-2) {
-            if ((fgets(content, IOBUFF, fp)) == NULL)
+    }
+
+    while(y < LINES-2) {
+        if ((fgets(content, IOBUFF, fp)) == NULL)
+        {
+            if (feof(fp))
             {
-                if (feof(fp))
-                {
-                    break;
-                } else if (ferror(fp))
-                {
-                    err_ui("fgets error.");
-                    return -1;
-                }
+                break;
+            } else if (ferror(fp))
+            {
+                err_ui("fgets error.");
+                return -1;
             }
-            waddstr(wp, content);
-            getyx(wp, y, x);
-            wmove(wp, y, x+1);
         }
+        waddstr(wp, content);
+        getyx(wp, y, x);
+        wmove(wp, y, x+1);
     }
     index[(*now)+1] = ftell(fp);
     wrefresh(wp);
@@ -95,7 +86,7 @@ int update_content(WINDOW* wp, int fd, int ins, long index[], int *now) {
 
 
 int update_bks(WINDOW* wp, bookcase_t* bcp, int highlight) {
-    int ox = 1, x = 1, y = 1, counter = 0;
+    int x = 1, y = 1, counter = 0;
     book_t *bkp = NULL;
 
     for (bkp = bcp->booklist; bkp != NULL; bkp = bkp->next)
@@ -109,7 +100,7 @@ int update_bks(WINDOW* wp, bookcase_t* bcp, int highlight) {
             mvwaddstr(wp, y, x, bkp->name);
         }
 
-        x = ox;
+        x = 1;
         ++y;
         ++counter;
     }
@@ -121,7 +112,7 @@ int update_bks(WINDOW* wp, bookcase_t* bcp, int highlight) {
 
 
 int update_bcs(WINDOW* wp, manifest_t* mp, int highlight) {
-    int ox = 1, x = 1, y = 1, counter = 0;
+    int x = 1, y = 1, counter = 0;
     bookcase_t *bcp = NULL;
 
     for (bcp = mp->bclist; bcp != NULL; bcp = bcp->next)
@@ -135,7 +126,7 @@ int update_bcs(WINDOW* wp, manifest_t* mp, int highlight) {
             mvwaddstr(wp, y, x, bcp->name);
         }
 
-        x = ox;
+        x = 1;
         ++y;
         ++counter;
     }
@@ -160,7 +151,6 @@ int switch_to_bk(WINDOW* wp, char* filename) {
     }
 
     update_content(wp, fd, ins, index, &now);
-
     while(1) {
         ins = 0;
         choice = -1;
@@ -176,9 +166,6 @@ int switch_to_bk(WINDOW* wp, char* filename) {
                 break;
             case 'q':
                 choice = QUIT;
-                break;
-
-            default:
                 break;
         }
         update_content(wp, fd, ins, index, &now);
@@ -199,7 +186,6 @@ int switch_to_bks(WINDOW* wp, bookcase_t* bcp) {
     book_t *bkp = NULL;
 
     update_bks(wp, bcp, highlight);
-
     while(1) {
         choice = -1;
         c = getch();
@@ -228,32 +214,36 @@ int switch_to_bks(WINDOW* wp, bookcase_t* bcp) {
             case 10:
                 choice = highlight;
                 break;
-
-            default:
-                break;
         }
         update_bks(wp, bcp, highlight);
         if(choice != -1) {
+            if (choice == QUIT)
+            {
+                return 0;
+            }
+
             counter = 0;
             for (bkp = bcp->booklist; bkp != NULL; bkp = bkp->next)
             {
                 if (counter++ == choice) {
                     switch_to_bk(wp, bkp->path);
-                    wclear(wp);
-                    box(wp, 0, 0);
-                    wrefresh(wp);
+                    clear_win_char(wp);
+                    update_bks(wp, bcp, highlight);
 
                     break;
                 }
-            }
-            if (choice == QUIT)
-            {
-                return 0;
             }
         }
     }
 
     return 0;
+}
+
+
+void clear_notif() {
+    move(LINES-1, 0);
+    clrtoeol();
+    refresh();
 }
 
 
@@ -307,20 +297,9 @@ int display_ui(manifest_t* mp) {
             case 10:
                 choice = highlight;
                 break;
-
-            default:
-                break;
         }
         update_bcs(wp_bcs, mp, highlight);
         if(choice != -1) {
-            counter = 0;
-            for (bcp = mp->bclist; bcp != NULL; bcp = bcp->next)
-            {
-                if (counter++ == choice) {
-                    switch_to_bks(wp_bks, bcp);
-                    break;
-                }
-            }
             if (choice == QUIT)
             {
                 mvaddstr(LINES-1, 0, "Quit Tread? ([yes]/no):");
@@ -329,10 +308,17 @@ int display_ui(manifest_t* mp) {
                 if (c == 'y') {
                     break;
                 } else {
-                    move(LINES-1, 0);
-                    clrtoeol();
-                    refresh();
+                    clear_notif();
                     continue;
+                }
+            }
+
+            counter = 0;
+            for (bcp = mp->bclist; bcp != NULL; bcp = bcp->next)
+            {
+                if (counter++ == choice) {
+                    switch_to_bks(wp_bks, bcp);
+                    break;
                 }
             }
         }
