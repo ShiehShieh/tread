@@ -4,9 +4,7 @@
 #include <ncurses.h>
 #include "bookcase.h"
 
-int clear_win_char(WINDOW* wp);
-
-int update_bk(WINDOW* wp, int fp, long index[], int *now);
+int update_content(WINDOW* wp, int fp, long index[], int *now);
 
 int update_bks(WINDOW* wp, bookcase_t* bcp, int highlight);
 
@@ -16,7 +14,7 @@ int switch_to_bk(WINDOW* wp, char* filename);
 
 int switch_to_bks(WINDOW* wp, bookcase_t* bcp);
 
-void clear_notif();
+int display_help(WINDOW* wp);
 
 int display_ui(manifest_t* mp);
 

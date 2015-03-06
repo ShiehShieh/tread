@@ -42,9 +42,13 @@ int build_book(char* path, book_t* bkp);
 
 int insert_bklist(bookcase_t* bcp, book_t* item);
 
+int dele_from_booklist(bookcase_t* bcp, book_t* item);
+
 int build_bookcase(char* directory, bookcase_t* bc);
 
 int insert_bclist(manifest_t* mp, bookcase_t* item);
+
+int dele_from_bclist(manifest_t* mp, bookcase_t* item);
 
 int build_manifest(char *directory, manifest_t* mp);
 

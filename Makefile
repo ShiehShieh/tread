@@ -15,7 +15,10 @@ tr_ui.o : src/tr_ui.c src/bookcase.h src/util.h
 util.o : src/util.c
 	(cd src; gcc -c util.c $(FLAGS))
 
+rmobj :
+	(cd src;rm tread.o bookcase.o tr_ui.o util.o)
+
 clean :
 	rm tread
-	(cd src;rm tread.o bookcase.o tr_ui.o util.o $(FLAGS))
+	(cd src;rm tread.o bookcase.o tr_ui.o util.o)
 
